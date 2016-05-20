@@ -60,6 +60,7 @@ static NSString * const kTableColumnFileSize       = @"FileSize";
 - (IBAction)onExportButtonClicked:(id)sender;
 - (IBAction)onDeleteButtonClicked:(id)sender;
 
+@property (weak) IBOutlet NSTextField *filterTextField;
 @end
 
 @implementation MainViewController
@@ -70,7 +71,7 @@ static NSString * const kTableColumnFileSize       = @"FileSize";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
+    
     // Do any additional setup after loading the view.
     // Setup double click
     self.unusedResults = [NSMutableArray array];
@@ -84,7 +85,7 @@ static NSString * const kTableColumnFileSize       = @"FileSize";
 
 - (void)setRepresentedObject:(id)representedObject {
     [super setRepresentedObject:representedObject];
-
+    
     // Update the view, if already loaded.
 }
 
@@ -329,7 +330,7 @@ static NSString * const kTableColumnFileSize       = @"FileSize";
     [_swiftCheckbox setEnabled:state];
     
     [_ignoreSimilarCheckbox setEnabled:state];
-
+    
     [_searchButton setEnabled:state];
     [_exportButton setHidden:!state];
     [_deleteButton setEnabled:state];
@@ -366,10 +367,33 @@ static NSString * const kTableColumnFileSize       = @"FileSize";
             }
         }
         
+        //sfx add
+        //从搜索结果中过滤掉不需要的：
+        [self filterFromeUnusedResults];
+        
         [self.resultsTableView reloadData];
         
         [self setUIEnabled:YES];
     }
 }
 
+- (void)filterFromeUnusedResults
+{
+    if (_filterTextField.stringValue.length <= 0) {
+        return;
+    }
+    NSArray *strs = [_filterTextField.stringValue componentsSeparatedByString:@";"];
+    if (strs.count > 0) {
+        __block NSMutableArray *filters = [NSMutableArray array];
+        for (NSString *str in strs) {
+            [self.unusedResults enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                ResourceFileInfo *filtInfo = (ResourceFileInfo *)obj;
+                if ([filtInfo.name hasPrefix:str]) {
+                    [filters addObject:obj];
+                }
+            }];
+        }
+        [self.unusedResults removeObjectsInArray:filters];
+    }
+}
 @end
